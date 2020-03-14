@@ -14,25 +14,52 @@ app.get("/", function(req,res) {
 });
 
 app.get("/notes", function(req, res) {
-    res.sendFile(path.join(__dirname, "public/notes.html"))
+    res.sendFile(path.join(__dirname, "/public/notes.html"))
     
 })
 
 app.get("/api/notes", function(req, res) {
-    fs.readFile("./db/db.json", "utf8", (err,data) => {
+    fs.readFile("public/db/db.json", "utf8", (err,data) => {
         if(err){
             throw err
         }
-        return res.json(data)
+        return res.json(JSON.parse(data))
     })
 });
 
 app.post("/api/notes", function(req, res) {
     let note = JSON.stringify(req.body)
-    fs.appendFile("./db/db.json", note, (err) => {
-        if(err) throw err;   
+    fs.readFile("public/db/db.json", "utf8", (err, data) => {
+        if(err) throw err;
+        var newData = JSON.parse(data)
+        newData.push(JSON.parse(note))
+        for(let i = 0; i < newData.length; i++){
+            newData[i].id = i + 1
+        }
+        console.log(newData)
+        fs.writeFile("public/db/db.json", JSON.stringify(newData), (err) =>{
+            if(err) throw err;
+            return res.json(JSON.parse(note))
+        })
+       
+    
+})})
+
+app.delete("/api/notes/:id", function(req, res) {
+    var target = req.params.id - 1
+    fs.readFile("public/db/db.json", "utf8", (err, data) => {
+        if(err) throw err;
+        var newData = JSON.parse(data)
+        newData.splice(target, 1)
+        for(let i = 0; i < newData.length; i++){
+            newData[i].id = i + 1
+        }
+        console.log(newData)
+        fs.writeFile("public/db/db.json", JSON.stringify(newData), (err) =>{
+            if(err) throw err;
+        })
     })
-    res.json(note)
+    res.send("Note Deleted!")
 })
 
 
